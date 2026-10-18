@@ -1,3 +1,5 @@
+import { GoogleGenAI } from '@google/genai';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,6 +17,8 @@ export default async function handler(req, res) {
 
         const { message, personality } = req.body;
 
+        const ai = new GoogleGenAI({ apiKey });
+
         let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses under 3 sentences.";
 
         if (personality === 'iracing') {
@@ -23,27 +27,20 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires.";
         }
 
-        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: message }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            })
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: message,
+            config: {
+                systemInstruction: systemPrompt,
+                maxOutputTokens: 150,
+            }
         });
 
-        const data = await apiResponse.json();
-        
-        if (data.error) {
-            console.error("Gemini API Error Detail:", JSON.stringify(data.error));
-            return res.status(500).json({ reply: `Pit wall error: ${data.error.message || 'Check API key'}` });
-        }
-
-        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Haha, yes! Simply lovely.";
-
+        const replyText = response.text || "Haha, yes! Simply lovely.";
         return res.status(200).json({ reply: replyText });
+
     } catch (error) {
-        console.error("Server Error:", error);
-        return res.status(500).json({ reply: "Mate, complete radio black out!" });
+        console.error("SDK Error:", error);
+        return res.status(500).json({ reply: `Pit wall error: ${error.message || 'Check connection'}` });
     }
 }

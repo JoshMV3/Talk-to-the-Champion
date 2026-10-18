@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to the Champion - Max Botstappen</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0e14;
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 500px;
+            background-color: #161b22;
+            border: 2px solid #e10600;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(225, 6, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background-color: #e10600;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        .chat-box {
+            height: 380px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        .user-message {
+            background-color: #1f6feb;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            align-self: flex-start;
+        }
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background-color: #0d1117;
+            border-top: 1px solid #30363d;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: white;
+            outline: none;
+        }
+        button {
+            background-color: #e10600;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            margin-left: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #b80500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">🏎️ MAX BOTSTAPPEN AI</div>
+        <div class="chat-box" id="chatBox">
+            <div class="message bot-message">
+                Haha, yes boys! Simply lovely. What do you want to talk about? Make it quick, I have sim racing in 5 minutes.
+            </div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Ask Max something..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const responses = [
+            "Haha, yes! Simply lovely stint.",
+            "Mate, honestly, I just pushed as hard as I could.",
+            "It is what it is. We move on to the next race.",
+            "I'm not here to finish second, okay?",
+            "Can I go back to iRacing now?",
+            "The car was on rails today. Pure perfection.",
+            "That move was clean! If you don't go for a gap, you're not racing!"
+        ];
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const chatBox = document.getElementById('chatBox');
+            const text = input.value.trim();
+
+            if (text === '') return;
+
+            // User Message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-message';
+            userMsg.innerText = text;
+            chatBox.appendChild(userMsg);
+
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Parody Bot Response
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot-message';
+                const randomReply = responses[Math.floor(Math.random() * responses.length)];
+                botMsg.innerText = randomReply;
+                chatBox.appendChild(botMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 600);
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

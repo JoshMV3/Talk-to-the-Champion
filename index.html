@@ -5,116 +5,294 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Talk to the Champion - Max Botstappen</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0b0e14;
-            color: #ffffff;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #161b22;
+            --accent-red: #e10600;
+            --accent-blue: #1f6feb;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --border-color: #30363d;
         }
-        .chat-container {
-            width: 90%;
-            max-width: 500px;
-            background-color: #161b22;
-            border: 2px solid #e10600;
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent-red);
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(225, 6, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(225, 6, 0, 0.25);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            height: 85vh;
+            max-height: 750px;
         }
-        .chat-header {
-            background-color: #e10600;
+
+        /* Header */
+        .header {
+            background-color: var(--accent-red);
             color: white;
-            padding: 15px;
+            padding: 16px;
             text-align: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .personality-select {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Telemetry Dashboard */
+        .dashboard {
+            background-color: #0d1117;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .stat-item span {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        /* Quick Prompts */
+        .quick-chips {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            background-color: #12161f;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chip {
+            background-color: #21262d;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chip:hover {
+            border-color: var(--accent-red);
+            background-color: #2b323b;
+        }
+
+        /* Chat Area */
         .chat-box {
-            height: 380px;
-            padding: 15px;
+            flex: 1;
+            padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
+
         .message {
             max-width: 80%;
-            padding: 10px 14px;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border-radius: 10px;
             font-size: 0.95rem;
-            line-height: 1.4;
+            line-height: 1.45;
+            position: relative;
+            word-wrap: break-word;
         }
+
         .user-message {
-            background-color: #1f6feb;
+            background-color: var(--accent-blue);
             align-self: flex-end;
+            border-bottom-right-radius: 2px;
         }
+
         .bot-message {
             background-color: #21262d;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border-color);
             align-self: flex-start;
+            border-bottom-left-radius: 2px;
         }
+
+        .timestamp {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+            text-align: right;
+            display: block;
+        }
+
+        /* Control Input Area */
         .input-area {
             display: flex;
-            padding: 10px;
+            padding: 12px 16px;
             background-color: #0d1117;
-            border-top: 1px solid #30363d;
+            border-top: 1px solid var(--border-color);
+            gap: 8px;
         }
+
         input {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             color: white;
             outline: none;
+            font-size: 0.95rem;
         }
+
+        input:focus {
+            border-color: var(--accent-red);
+        }
+
         button {
-            background-color: #e10600;
+            background-color: var(--accent-red);
             color: white;
             border: none;
-            padding: 10px 16px;
-            margin-left: 8px;
-            border-radius: 6px;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
         }
+
         button:hover {
             background-color: #b80500;
+        }
+
+        .action-btn {
+            background-color: #21262d;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            color: white;
+            border-color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
-    <div class="chat-container">
-        <div class="chat-header">🏎️ MAX BOTSTAPPEN AI</div>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                🏎️ MAX BOTSTAPPEN
+            </div>
+            <select class="personality-select" id="personalitySelect">
+                <option value="standard">Standard (Simply Lovely)</option>
+                <option value="iracing">Sim Racing Gamer</option>
+                <option value="rant">Radio Rant Mode</option>
+            </select>
+        </div>
+
+        <!-- Telemetry Bar -->
+        <div class="dashboard">
+            <div class="stat-item">TIRE WEAR: <span id="tireWear">100%</span></div>
+            <div class="stat-item">RADIO FRUSTRATION: <span id="frustration">0%</span></div>
+            <div class="stat-item">GAP TO P2: <span id="gapP2">+24.8s</span></div>
+        </div>
+
+        <!-- Quick Radio Chips -->
+        <div class="quick-chips">
+            <div class="chip" onclick="sendQuickPrompt('How was the race today?')">"How was the race?"</div>
+            <div class="chip" onclick="sendQuickPrompt('Why are you so fast?')">"Why are you so fast?"</div>
+            <div class="chip" onclick="sendQuickPrompt('Are you sim racing tonight?')">"Sim racing tonight?"</div>
+            <div class="chip" onclick="sendQuickPrompt('How are the tires feeling?')">"How are the tires?"</div>
+        </div>
+
+        <!-- Chat Area -->
         <div class="chat-box" id="chatBox">
             <div class="message bot-message">
                 Haha, yes boys! Simply lovely. What do you want to talk about? Make it quick, I have sim racing in 5 minutes.
+                <span class="timestamp" id="initialTime"></span>
             </div>
         </div>
+
+        <!-- Input Section -->
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Ask Max something..." onkeypress="handleKeyPress(event)">
+            <button class="action-btn" title="Clear Chat" onclick="clearChat()">🗑️</button>
+            <input type="text" id="userInput" placeholder="Type a message to Max..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
 
     <script>
-        const responses = [
-            "Haha, yes! Simply lovely stint.",
-            "Mate, honestly, I just pushed as hard as I could.",
-            "It is what it is. We move on to the next race.",
-            "I'm not here to finish second, okay?",
-            "Can I go back to iRacing now?",
-            "The car was on rails today. Pure perfection.",
-            "That move was clean! If you don't go for a gap, you're not racing!"
-        ];
+        // Set Initial Timestamp
+        document.getElementById('initialTime').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Dynamic Persona Responses
+        const personaResponses = {
+            standard: [
+                "Haha, yes! Simply lovely stint, car was on rails.",
+                "Mate, honestly, I just pushed as hard as I could.",
+                "It is what it is. We move on to the next race.",
+                "I'm not here to finish second, okay?",
+                "The balance was unbelievable today. Big thanks to the team."
+            ],
+            iracing: [
+                "Mate! He just turned directly into me on lap 1 of the 24 Hours of Nürburgring!",
+                "Can we hurry this up? My iRacing lobby starts in 3 minutes.",
+                "I stayed up until 4 AM racing GT3 cars. I feel great.",
+                "Honestly, the sim setup gives better force feedback than this."
+            ],
+            rant: [
+                "WHAT IS HE DOING?! Mate, he completely brake-tested me!",
+                "These tires are completely dead! Mate, I'm driving on ice!",
+                "DON'T ASK ME AGAIN! I already gave my reasons last year!",
+                "Mate, my radio button is stuck, stop talking to me in the braking zone!"
+            ]
+        };
+
+        let frustrationLevel = 0;
+        let tireLevel = 100;
 
         function sendMessage() {
             const input = document.getElementById('userInput');
@@ -123,30 +301,79 @@
 
             if (text === '') return;
 
-            // User Message
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Render User Message
             const userMsg = document.createElement('div');
             userMsg.className = 'message user-message';
-            userMsg.innerText = text;
+            userMsg.innerHTML = `${escapeHtml(text)}<span class="timestamp">${timeStr}</span>`;
             chatBox.appendChild(userMsg);
 
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Parody Bot Response
+            // Update Telemetry Metrics
+            updateTelemetry();
+
+            // Render Bot Response after brief delay
             setTimeout(() => {
+                const persona = document.getElementById('personalitySelect').value;
+                const pool = personaResponses[persona];
+                const reply = pool[Math.floor(Math.random() * pool.length)];
+
                 const botMsg = document.createElement('div');
                 botMsg.className = 'message bot-message';
-                const randomReply = responses[Math.floor(Math.random() * responses.length)];
-                botMsg.innerText = randomReply;
+                botMsg.innerHTML = `${reply}<span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
                 chatBox.appendChild(botMsg);
                 chatBox.scrollTop = chatBox.scrollHeight;
-            }, 600);
+            }, 500);
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('userInput').value = promptText;
+            sendMessage();
+        }
+
+        function updateTelemetry() {
+            // Degrade tires slightly
+            tireLevel = Math.max(12, tireLevel - Math.floor(Math.random() * 8 + 3));
+            document.getElementById('tireWear').innerText = tireLevel + '%';
+
+            // Adjust frustration level
+            frustrationLevel = Math.min(100, frustrationLevel + Math.floor(Math.random() * 15 + 5));
+            document.getElementById('frustration').innerText = frustrationLevel + '%';
+        }
+
+        function clearChat() {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = `
+                <div class="message bot-message">
+                    Radio reset. Simply lovely. Let's start again.
+                    <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+            `;
+            tireLevel = 100;
+            frustrationLevel = 0;
+            document.getElementById('tireWear').innerText = '100%';
+            document.getElementById('frustration').innerText = '0%';
         }
 
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
+        }
+
+        function escapeHtml(string) {
+            return String(string).replace(/[&<>"']/g, function (s) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[s];
+            });
         }
     </script>
 </body>

@@ -1,5 +1,7 @@
 {
   "name": "talk-to-the-champion",
   "version": "1.0.0",
-  "dependencies": {}
+  "dependencies": {
+    "@google/genai": "^0.1.2"
+  }
 }

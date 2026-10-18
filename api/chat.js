@@ -23,8 +23,7 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires.";
         }
 
-        // Call Gemini API directly via standard REST endpoint
-        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -36,8 +35,8 @@ export default async function handler(req, res) {
         const data = await apiResponse.json();
         
         if (data.error) {
-            console.error("Gemini API Error:", data.error);
-            return res.status(500).json({ reply: "Mate, API error from the pit wall!" });
+            console.error("Gemini API Error Detail:", JSON.stringify(data.error));
+            return res.status(500).json({ reply: `Pit wall error: ${data.error.message || 'Check API key'}` });
         }
 
         const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Haha, yes! Simply lovely.";

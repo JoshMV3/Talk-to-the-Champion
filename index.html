@@ -3,218 +3,333 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talk to the Champion - Max Botstappen</title>
+    <title>Talk to the Champion - Max Botstappen AI</title>
     <style>
         :root {
-            --bg-color: #0b0e14;
-            --card-bg: #161b22;
-            --accent-red: #e10600;
-            --accent-blue: #1f6feb;
+            --bg-dark: #080a0f;
+            --card-bg: rgba(22, 27, 34, 0.85);
+            --border-red: #e10600;
+            --accent-blue: #00d2be;
+            --user-bubble: #1f6feb;
+            --bot-bubble: #21262d;
             --text-main: #f0f6fc;
             --text-muted: #8b949e;
-            --border-color: #30363d;
+            --border-subtle: #30363d;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(225, 6, 0, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 210, 190, 0.1) 0%, transparent 40%);
             color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
             width: 100%;
-            max-width: 650px;
-            background-color: var(--card-bg);
-            border: 2px solid var(--accent-red);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(225, 6, 0, 0.25);
+            max-width: 720px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 2px solid var(--border-red);
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(225, 6, 0, 0.25);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            height: 85vh;
-            max-height: 750px;
+            height: 88vh;
+            max-height: 800px;
         }
 
-        /* Header */
+        /* Header Bar */
         .header {
-            background-color: var(--accent-red);
+            background: linear-gradient(135deg, #e10600 0%, #a00400 100%);
             color: white;
-            padding: 16px;
-            text-align: center;
-            font-weight: 800;
-            font-size: 1.3rem;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            padding: 14px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
 
         .header-title {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            letter-spacing: 1.5px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .personality-select {
-            background-color: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            padding: 4px 8px;
+            border-radius: 8px;
+            padding: 6px 10px;
             font-size: 0.85rem;
             cursor: pointer;
             outline: none;
+            font-weight: bold;
+        }
+
+        .icon-btn {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         /* Telemetry Dashboard */
         .dashboard {
-            background-color: #0d1117;
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            background: #0d1117;
+            padding: 10px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            font-size: 0.78rem;
             font-family: monospace;
         }
 
-        .stat-item span {
-            color: var(--accent-red);
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-title {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        .stat-value {
+            color: var(--accent-blue);
             font-weight: bold;
         }
 
-        /* Quick Prompts */
+        .bar-container {
+            width: 100%;
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent-blue);
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+
+        /* Quick Chips */
         .quick-chips {
             display: flex;
             gap: 8px;
-            padding: 10px 16px;
-            background-color: #12161f;
+            padding: 10px 18px;
+            background: #12161f;
             overflow-x: auto;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-subtle);
+            scrollbar-width: thin;
         }
 
         .chip {
-            background-color: #21262d;
+            background: #21262d;
             color: var(--text-main);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
             padding: 6px 12px;
             font-size: 0.8rem;
             white-space: nowrap;
             cursor: pointer;
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .chip:hover {
-            border-color: var(--accent-red);
-            background-color: #2b323b;
+            border-color: var(--border-red);
+            background: #2d333b;
+            transform: translateY(-1px);
         }
 
         /* Chat Area */
         .chat-box {
             flex: 1;
-            padding: 16px;
+            padding: 18px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
+            scrollbar-width: thin;
         }
 
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+        }
+
+        .user-row { align-self: flex-end; }
+        .bot-row { align-self: flex-start; }
+
         .message {
-            max-width: 80%;
             padding: 12px 16px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 0.95rem;
-            line-height: 1.45;
+            line-height: 1.5;
             position: relative;
             word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .user-message {
-            background-color: var(--accent-blue);
-            align-self: flex-end;
+            background: var(--user-bubble);
+            color: white;
             border-bottom-right-radius: 2px;
         }
 
         .bot-message {
-            background-color: #21262d;
-            border: 1px solid var(--border-color);
-            align-self: flex-start;
+            background: var(--bot-bubble);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
             border-bottom-left-radius: 2px;
         }
 
-        .timestamp {
+        .msg-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
             font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 4px;
-            text-align: right;
-            display: block;
+            color: var(--text-muted);
+            gap: 10px;
         }
 
-        /* Control Input Area */
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .copy-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Input Bar */
         .input-area {
             display: flex;
-            padding: 12px 16px;
-            background-color: #0d1117;
-            border-top: 1px solid var(--border-color);
-            gap: 8px;
+            padding: 14px 18px;
+            background: #0d1117;
+            border-top: 1px solid var(--border-subtle);
+            gap: 10px;
         }
 
         input {
             flex: 1;
-            padding: 12px;
-            background-color: #161b22;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 12px 16px;
+            background: #161b22;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
             color: white;
             outline: none;
             font-size: 0.95rem;
+            transition: border-color 0.2s;
         }
 
         input:focus {
-            border-color: var(--accent-red);
+            border-color: var(--border-red);
         }
 
-        button {
-            background-color: var(--accent-red);
+        .send-btn {
+            background: var(--border-red);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 12px 22px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
             font-size: 0.95rem;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        button:hover {
-            background-color: #b80500;
+        .send-btn:hover {
+            background: #b80500;
+            box-shadow: 0 0 12px rgba(225, 6, 0, 0.4);
         }
 
-        .action-btn {
-            background-color: #21262d;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
+        .send-btn:disabled {
+            background: #484f58;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
-        .action-btn:hover {
-            color: white;
-            border-color: var(--text-muted);
+        /* Loading Skeleton */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
         }
     </style>
 </head>
@@ -226,107 +341,239 @@
             <div class="header-title">
                 🏎️ MAX BOTSTAPPEN
             </div>
-            <select class="personality-select" id="personalitySelect">
-                <option value="standard">Standard (Simply Lovely)</option>
-                <option value="iracing">Sim Racing Gamer</option>
-                <option value="rant">Radio Rant Mode</option>
-            </select>
+            <div class="controls">
+                <select class="personality-select" id="personalitySelect">
+                    <option value="standard">Standard (Simply Lovely)</option>
+                    <option value="iracing">Sim Racing Gamer</option>
+                    <option value="rant">Radio Rant Mode</option>
+                </select>
+                <button class="icon-btn" id="audioToggle" onclick="toggleAudio()" title="Toggle Audio FX">🔊</button>
+                <button class="icon-btn" id="ttsToggle" onclick="toggleTTS()" title="Toggle Voice (TTS)">🗣️</button>
+                <button class="icon-btn" onclick="clearChat()" title="Reset Radio">🗑️</button>
+            </div>
         </div>
 
-        <!-- Telemetry Bar -->
+        <!-- Telemetry Dashboard -->
         <div class="dashboard">
-            <div class="stat-item">TIRE WEAR: <span id="tireWear">100%</span></div>
-            <div class="stat-item">RADIO FRUSTRATION: <span id="frustration">0%</span></div>
-            <div class="stat-item">GAP TO P2: <span id="gapP2">+24.8s</span></div>
+            <div class="stat-card">
+                <div class="stat-title">RADIO RANT LEVEL</div>
+                <div class="stat-value" id="frustrationVal">0%</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="frustrationBar"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">SOFT TIRES</div>
+                <div class="stat-value" id="tireVal" style="color: #3fb950;">100%</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="tireBar" style="width: 100%; background: #3fb950;"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">PIT WALL PING</div>
+                <div class="stat-value" id="pingVal">24ms</div>
+                <div class="stat-title" style="margin-top:2px;">STATUS: ONLINE</div>
+            </div>
         </div>
 
-        <!-- Quick Radio Chips -->
+        <!-- Quick Chips -->
         <div class="quick-chips">
-            <div class="chip" onclick="sendQuickPrompt('How was the race today?')">"How was the race?"</div>
-            <div class="chip" onclick="sendQuickPrompt('Why are you so fast?')">"Why are you so fast?"</div>
-            <div class="chip" onclick="sendQuickPrompt('Are you sim racing tonight?')">"Sim racing tonight?"</div>
-            <div class="chip" onclick="sendQuickPrompt('How are the tires feeling?')">"How are the tires?"</div>
+            <div class="chip" onclick="sendQuickPrompt('How was the race today?')">📻 "How was the race?"</div>
+            <div class="chip" onclick="sendQuickPrompt('Why are you so fast?')">⚡ "Why are you so fast?"</div>
+            <div class="chip" onclick="sendQuickPrompt('Are you sim racing tonight?')">🎮 "Sim racing tonight?"</div>
+            <div class="chip" onclick="sendQuickPrompt('How are the soft tires holding up?')">🛞 "How are the tires?"</div>
         </div>
 
-        <!-- Chat Area -->
+        <!-- Chat Box -->
         <div class="chat-box" id="chatBox">
-            <div class="message bot-message">
-                Haha, yes boys! Simply lovely. What do you want to talk about? Make it quick, I have sim racing in 5 minutes.
-                <span class="timestamp" id="initialTime"></span>
+            <div class="message-row bot-row">
+                <div class="message bot-message">
+                    Haha, yes boys! Simply lovely. Live AI pit-wall connected. What do you want to talk about?
+                </div>
+                <div class="msg-footer">
+                    <span class="timestamp" id="initialTime"></span>
+                    <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+                </div>
             </div>
         </div>
 
         <!-- Input Section -->
         <div class="input-area">
-            <button class="action-btn" title="Clear Chat" onclick="clearChat()">🗑️</button>
-            <input type="text" id="userInput" placeholder="Type a message to Max..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">Send</button>
+            <input type="text" id="userInput" placeholder="Talk to Max..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                <span>Send</span> 🏎️
+            </button>
         </div>
     </div>
 
     <script>
-        // Set Initial Timestamp
         document.getElementById('initialTime').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        // Dynamic Persona Responses
-        const personaResponses = {
-            standard: [
-                "Haha, yes! Simply lovely stint, car was on rails.",
-                "Mate, honestly, I just pushed as hard as I could.",
-                "It is what it is. We move on to the next race.",
-                "I'm not here to finish second, okay?",
-                "The balance was unbelievable today. Big thanks to the team."
-            ],
-            iracing: [
-                "Mate! He just turned directly into me on lap 1 of the 24 Hours of Nürburgring!",
-                "Can we hurry this up? My iRacing lobby starts in 3 minutes.",
-                "I stayed up until 4 AM racing GT3 cars. I feel great.",
-                "Honestly, the sim setup gives better force feedback than this."
-            ],
-            rant: [
-                "WHAT IS HE DOING?! Mate, he completely brake-tested me!",
-                "These tires are completely dead! Mate, I'm driving on ice!",
-                "DON'T ASK ME AGAIN! I already gave my reasons last year!",
-                "Mate, my radio button is stuck, stop talking to me in the braking zone!"
-            ]
-        };
-
+        let audioEnabled = true;
+        let ttsEnabled = false;
         let frustrationLevel = 0;
         let tireLevel = 100;
 
-        function sendMessage() {
+        // Web Audio Synthesizer sound effects
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'send') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.15);
+                } else if (type === 'receive') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.2);
+                }
+            } catch (e) {
+                // AudioContext fallback silently ignored
+            }
+        }
+
+        function speakText(text) {
+            if (!ttsEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.1;
+            utterance.pitch = 0.95;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audioToggle').innerText = audioEnabled ? '🔊' : '🔇';
+        }
+
+        function toggleTTS() {
+            ttsEnabled = !ttsEnabled;
+            document.getElementById('ttsToggle').innerText = ttsEnabled ? '🗣️' : '😶';
+        }
+
+        async function sendMessage() {
             const input = document.getElementById('userInput');
             const chatBox = document.getElementById('chatBox');
+            const sendBtn = document.getElementById('sendBtn');
             const text = input.value.trim();
+            const personality = document.getElementById('personalitySelect').value;
 
             if (text === '') return;
 
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+            playSound('send');
+
             // Render User Message
-            const userMsg = document.createElement('div');
-            userMsg.className = 'message user-message';
-            userMsg.innerHTML = `${escapeHtml(text)}<span class="timestamp">${timeStr}</span>`;
-            chatBox.appendChild(userMsg);
+            const userRow = document.createElement('div');
+            userRow.className = 'message-row user-row';
+            userRow.innerHTML = `
+                <div class="message user-message">${escapeHtml(text)}</div>
+                <div class="msg-footer">
+                    <span class="timestamp">${timeStr}</span>
+                </div>
+            `;
+            chatBox.appendChild(userRow);
 
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
+            sendBtn.disabled = true;
 
-            // Update Telemetry Metrics
+            // Render Loading State
+            const botRow = document.createElement('div');
+            botRow.className = 'message-row bot-row';
+            botRow.innerHTML = `
+                <div class="message bot-message">
+                    <div class="typing-indicator">
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        <span style="font-size:0.8rem; margin-left:6px; color:var(--text-muted);">Box box... checking telemetry...</span>
+                    </div>
+                </div>
+            `;
+            chatBox.appendChild(botRow);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, personality: personality })
+                });
+
+                const data = await response.json();
+                const latency = Date.now() - startTime;
+                document.getElementById('pingVal').innerText = latency + 'ms';
+
+                const replyText = data.reply || "Mate, my radio button is stuck!";
+
+                botRow.innerHTML = `
+                    <div class="message bot-message">${escapeHtml(replyText)}</div>
+                    <div class="msg-footer">
+                        <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+                    </div>
+                `;
+
+                playSound('receive');
+                speakText(replyText);
+
+            } catch (err) {
+                botRow.innerHTML = `
+                    <div class="message bot-message">Mate, complete radio black out! Check backend status.</div>
+                    <div class="msg-footer">
+                        <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                `;
+            }
+
+            sendBtn.disabled = false;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
             updateTelemetry();
+        }
 
-            // Render Bot Response after brief delay
-            setTimeout(() => {
-                const persona = document.getElementById('personalitySelect').value;
-                const pool = personaResponses[persona];
-                const reply = pool[Math.floor(Math.random() * pool.length)];
+        function updateTelemetry() {
+            // Update Frustration
+            frustrationLevel = Math.min(100, frustrationLevel + Math.floor(Math.random() * 18 + 7));
+            document.getElementById('frustrationVal').innerText = frustrationLevel + '%';
+            const frustBar = document.getElementById('frustrationBar');
+            frustBar.style.width = frustrationLevel + '%';
+            if (frustrationLevel > 65) {
+                frustBar.style.background = '#e10600';
+            } else {
+                frustBar.style.background = '#00d2be';
+            }
 
-                const botMsg = document.createElement('div');
-                botMsg.className = 'message bot-message';
-                botMsg.innerHTML = `${reply}<span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
-                chatBox.appendChild(botMsg);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 500);
+            // Update Tires
+            tireLevel = Math.max(8, tireLevel - Math.floor(Math.random() * 8 + 4));
+            const tireVal = document.getElementById('tireVal');
+            const tireBar = document.getElementById('tireBar');
+            tireVal.innerText = tireLevel + '%';
+            tireBar.style.width = tireLevel + '%';
+
+            if (tireLevel < 30) {
+                tireVal.style.color = '#e10600';
+                tireBar.style.background = '#e10600';
+            } else if (tireLevel < 60) {
+                tireVal.style.color = '#d29922';
+                tireBar.style.background = '#d29922';
+            }
         }
 
         function sendQuickPrompt(promptText) {
@@ -334,45 +581,42 @@
             sendMessage();
         }
 
-        function updateTelemetry() {
-            // Degrade tires slightly
-            tireLevel = Math.max(12, tireLevel - Math.floor(Math.random() * 8 + 3));
-            document.getElementById('tireWear').innerText = tireLevel + '%';
-
-            // Adjust frustration level
-            frustrationLevel = Math.min(100, frustrationLevel + Math.floor(Math.random() * 15 + 5));
-            document.getElementById('frustration').innerText = frustrationLevel + '%';
-        }
-
         function clearChat() {
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML = `
-                <div class="message bot-message">
-                    Radio reset. Simply lovely. Let's start again.
-                    <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            document.getElementById('chatBox').innerHTML = `
+                <div class="message-row bot-row">
+                    <div class="message bot-message">
+                        Radio reset. Simply lovely. Let's start again.
+                    </div>
+                    <div class="msg-footer">
+                        <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+                    </div>
                 </div>
             `;
-            tireLevel = 100;
             frustrationLevel = 0;
-            document.getElementById('tireWear').innerText = '100%';
-            document.getElementById('frustration').innerText = '0%';
+            tireLevel = 100;
+            document.getElementById('frustrationVal').innerText = '0%';
+            document.getElementById('frustrationBar').style.width = '0%';
+            document.getElementById('tireVal').innerText = '100%';
+            document.getElementById('tireVal').style.color = '#3fb950';
+            document.getElementById('tireBar').style.width = '100%';
+            document.getElementById('tireBar').style.background = '#3fb950';
+        }
+
+        function copyText(btn) {
+            const msgText = btn.parentElement.parentElement.querySelector('.message').innerText;
+            navigator.clipboard.writeText(msgText);
+            btn.innerText = '✅ Copied';
+            setTimeout(() => { btn.innerText = '📋 Copy'; }, 2000);
         }
 
         function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+            if (event.key === 'Enter') sendMessage();
         }
 
         function escapeHtml(string) {
             return String(string).replace(/[&<>"']/g, function (s) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[s];
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s];
             });
         }
     </script>

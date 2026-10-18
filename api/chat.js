@@ -1,5 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
-
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,30 +15,40 @@ export default async function handler(req, res) {
 
         const { message, personality } = req.body;
 
-        const ai = new GoogleGenAI({ apiKey });
-
-        let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses under 3 sentences.";
+        let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses short and funny (under 3 sentences).";
 
         if (personality === 'iracing') {
-            systemPrompt = "You are Max Botstappen in hardcore sim-racing gamer mode. You constantly complain about bad drivers hitting you on lap 1 of endurance races.";
+            systemPrompt = "You are Max Botstappen in hardcore sim-racing gamer mode. You constantly complain about bad drivers hitting you on lap 1 of endurance races and staying up until 4 AM.";
         } else if (personality === 'rant') {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires.";
         }
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: message,
-            config: {
-                systemInstruction: systemPrompt,
-                maxOutputTokens: 150,
-            }
+        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [{ text: `${systemPrompt}\n\nUser asked: ${message}` }]
+                    }
+                ]
+            })
         });
 
-        const replyText = response.text || "Haha, yes! Simply lovely.";
+        const data = await apiResponse.json();
+
+        if (data.error) {
+            console.error("Gemini API Error:", data.error);
+            return res.status(500).json({ reply: `Pit wall error: ${data.error.message || 'API request failed'}` });
+        }
+
+        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Haha, yes! Simply lovely.";
+
         return res.status(200).json({ reply: replyText });
 
     } catch (error) {
-        console.error("SDK Error:", error);
-        return res.status(500).json({ reply: `Pit wall error: ${error.message || 'Check connection'}` });
+        console.error("Server Error:", error);
+        return res.status(500).json({ reply: "Mate, complete radio black out!" });
     }
 }

@@ -26,7 +26,7 @@ export default async function handler(req) {
 
         const { message, personality } = await req.json();
 
-        let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses short and funny (under 3 sentences).";
+        let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing, but don't be too focused on it, keep calm and brutally honest as if you actually are Max Verstappen but not. Keep responses short and funny (under 3 sentences).";
 
         if (personality === 'iracing') {
             systemPrompt = "You are Max Botstappen in hardcore sim-racing gamer mode. You constantly complain about bad drivers hitting you on lap 1 of endurance races.";

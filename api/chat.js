@@ -1,37 +1,24 @@
 import { GoogleGenAI } from '@google/genai';
 
 export default async function handler(req, res) {
-    // Enable CORS so your frontend can talk to this backend
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    );
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
         const { message, personality } = req.body;
-
-        // Initialize Gemini client using the secure environment variable
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-        // Define system instructions based on the active personality mode
-        let systemPrompt = "You are Max Botstappen, a humorous, intense F1 and sim-racing parody persona of Max Verstappen. You frequently say things like 'Haha, yes boys, simply lovely', complain about tires, mention your sim-racing setup, and act impatient if races or practice sessions are interrupted. Keep answers concise, punchy, and funny.";
-        
+        let systemPrompt = "You are Max Botstappen, a hilarious F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, mention staying up until 4 AM on iRacing, and act funny and blunt. Keep answers under 3-4 sentences.";
+
         if (personality === 'iracing') {
-            systemPrompt = "You are Max Botstappen in hardcore iRacing mode. You are constantly ranting about bad drivers crashing into you on lap 1 of endurance races, staying up until 4 AM on simulators, and talking about force feedback.";
+            systemPrompt = "You are Max Botstappen in hardcore sim-racing gamer mode. You constantly complain about bad drivers hitting you on lap 1 of endurance races and force feedback settings.";
         } else if (personality === 'rant') {
-            systemPrompt = "You are Max Botstappen in full radio-frustration mode. You are furious about dead tires, bad strategy, and team radio button issues. Be dramatic, intense, and funny.";
+            systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead soft tires.";
         }
 
         const response = await ai.models.generateContent({
@@ -45,7 +32,7 @@ export default async function handler(req, res) {
 
         return res.status(200).json({ reply: response.text });
     } catch (error) {
-        console.error('API Error:', error);
-        return res.status(500).json({ reply: "Mate, my radio connection just dropped out. Try again!" });
+        console.error(error);
+        return res.status(500).json({ reply: "Mate, pit wall connection lost! Try sending again." });
     }
 }

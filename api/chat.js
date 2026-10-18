@@ -23,14 +23,18 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires.";
         }
 
-        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // Endpoint using gemini-2.5-flash
+        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
                 contents: [
                     {
                         role: 'user',
-                        parts: [{ text: `${systemPrompt}\n\nUser asked: ${message}` }]
+                        parts: [{ text: message }]
                     }
                 ]
             })

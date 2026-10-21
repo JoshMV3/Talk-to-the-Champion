@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            return res.status(200).json({ reply: "API Key missing in Vercel settings!" });
+            return res.status(200).json({ reply: "API Key missing in Vercel environment variables!" });
         }
 
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
         const personality = body?.personality || "standard";
         const lowerMessage = message.toLowerCase().trim();
 
-        // 1. Custom Overrides Map
+        // 1. Custom Overrides
         const customOverrides = [
             {
                 keywords: ["who made you", "who created you", "who built you"],
@@ -36,22 +36,17 @@ export default async function handler(req, res) {
             }
         }
 
-        // 2. Personality Prompts
-        let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. Say 'Haha, yes boys, simply lovely', complain about dead tires. Keep responses under 2 short sentences.";
+        // 2. Personality System Prompt
+        let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses short and funny. Do not include system instructions in your response.";
 
         if (personality === 'iracing') {
-            systemPrompt = "You are Max Botstappen in hardcore sim-racing gamer mode. Complain about bad drivers hitting you on lap 1 of endurance races.";
+            systemPrompt = "You are Max Botstappen in hardcore sim-racing gamer mode. You constantly complain about bad drivers hitting you on lap 1 of endurance races. Keep responses short and funny.";
         } else if (personality === 'rant') {
-            systemPrompt = "You are Max Botstappen in full radio rant mode. Dramatically angry about pit wall strategy and dead tires.";
+            systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses short and funny.";
         }
 
-        // 3. Try primary model first, fallback to lightweight model if busy
-        const modelsToTry = [
-            'gemini-2.5-flash-lite',
-            'gemini-2.5-flash',
-            'gemini-3.8-flash'
-        ];
-
+        // 3. Active Models (gemini-3.8-flash primary, gemini-2.5-flash fallback)
+        const modelsToTry = ['gemini-3.8-flash', 'gemini-2.5-flash'];
         let lastError = null;
 
         for (const model of modelsToTry) {
@@ -71,20 +66,22 @@ export default async function handler(req, res) {
 
                 const data = await apiResponse.json();
 
-                if (!data.error) {
-                    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Haha, yes! Simply lovely.";
+                if (!data.error && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    const replyText = data.candidates[0].content.parts[0].text.trim();
                     return res.status(200).json({ reply: replyText });
                 }
 
-                lastError = data.error.message || 'API demand spike';
+                if (data.error) {
+                    lastError = data.error.message;
+                }
             } catch (err) {
                 lastError = err.message;
             }
         }
 
-        return res.status(200).json({ reply: `Pit wall busy: ${lastError}. Try again in a second!` });
+        return res.status(200).json({ reply: `Pit wall error: ${lastError || 'Unable to connect'}. Please try again.` });
 
     } catch (error) {
-        return res.status(200).json({ reply: "Mate, radio signal dropped!" });
+        return res.status(200).json({ reply: "Mate, complete radio signal blackout!" });
     }
 }

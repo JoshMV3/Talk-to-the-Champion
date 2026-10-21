@@ -547,7 +547,7 @@
 
                 document.getElementById('pingVal').innerText = (Date.now() - startTime) + 'ms';
                 playSound('receive');
-                botMsg.innerText = replyText;
+                botMsg.innerHTML = escapeHtml(replyText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 speakText(replyText);
 
             } catch (err) {

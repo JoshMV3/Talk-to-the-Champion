@@ -365,7 +365,7 @@
         </div>
 
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Talk to Max..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="userInput" placeholder="Talk to Max or type /help..." onkeypress="handleKeyPress(event)">
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">
                 <span>Send</span> 🏎️
             </button>
@@ -428,6 +428,61 @@
             document.getElementById('ttsToggle').innerText = ttsEnabled ? '🗣️' : '😶';
         }
 
+        function handleCustomCommand(cmd) {
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const chatBox = document.getElementById('chatBox');
+            const command = cmd.toLowerCase().trim();
+
+            let botReply = "";
+
+            if (command === '/pitstop' || command === '/box') {
+                tireLevel = 100;
+                frustrationLevel = Math.max(0, frustrationLevel - 30);
+                updateTelemetry();
+                document.getElementById('tireVal').innerText = '100%';
+                document.getElementById('tireVal').style.color = '#3fb950';
+                document.getElementById('tireBar').style.width = '100%';
+                document.getElementById('tireBar').style.background = '#3fb950';
+                botReply = "🛞 **BOX BOX BOX!** Fresh set of Softs fitted in 1.9 seconds. Let's push now!";
+            } else if (command === '/weather' || command === '/rain') {
+                botReply = "🌧️ **Pit Wall Telemetry:** Rain expected in 5 minutes! GP is preparing the Intermediate tires.";
+            } else if (command === '/disqualify' || command === '/blackflag') {
+                frustrationLevel = 100;
+                updateTelemetry();
+                botReply = "🚨 **BLACK FLAG!** Disqualified for track limits! Max is storming off to his motorhome!";
+            } else if (command === '/champion') {
+                botReply = "🏆 **MAX BOTSTAPPEN IS WORLD CHAMPION!** Simply lovely! Haha, yes boys!";
+            } else if (command === '/help') {
+                botReply = "📋 **Available Commands:**\n• `/pitstop` or `/box` - Reset tire wear\n• `/weather` - Check rain report\n• `/disqualify` - Instant radio rage\n• `/champion` - Victory celebration\n• `/clear` - Reset chat log";
+            } else if (command === '/clear') {
+                clearChat();
+                return;
+            } else {
+                botReply = `⚠️ Unknown command \`${cmd}\`. Type \`/help\` to see valid pit wall commands!`;
+            }
+
+            const userRow = document.createElement('div');
+            userRow.className = 'message-row user-row';
+            userRow.innerHTML = `
+                <div class="message user-message">${escapeHtml(cmd)}</div>
+                <div class="msg-footer"><span class="timestamp">${timeStr}</span></div>
+            `;
+            chatBox.appendChild(userRow);
+
+            playSound('receive');
+            const botRow = document.createElement('div');
+            botRow.className = 'message-row bot-row';
+            botRow.innerHTML = `
+                <div class="message bot-message">${botReply.replace(/\n/g, '<br>')}</div>
+                <div class="msg-footer">
+                    <span class="timestamp">${timeStr}</span>
+                    <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+                </div>
+            `;
+            chatBox.appendChild(botRow);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const chatBox = document.getElementById('chatBox');
@@ -436,6 +491,12 @@
             const personality = document.getElementById('personalitySelect').value;
 
             if (text === '') return;
+
+            if (text.startsWith('/')) {
+                handleCustomCommand(text);
+                input.value = '';
+                return;
+            }
 
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -501,7 +562,7 @@
                                 
                                 if (textChunk) {
                                     if (!firstChunkReceived) {
-                                        fullText = ''; // Clear "thinking..." on first word
+                                        fullText = ''; // Clear "thinking..." on first token
                                         firstChunkReceived = true;
                                         document.getElementById('pingVal').innerText = (Date.now() - startTime) + 'ms';
                                         playSound('receive');

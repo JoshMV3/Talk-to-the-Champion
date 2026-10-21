@@ -45,43 +45,32 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses short and funny.";
         }
 
-        // 3. Active Models (gemini-3.8-flash primary, gemini-2.5-flash fallback)
-        const modelsToTry = ['gemini-3.8-flash', 'gemini-2.5-flash'];
-        let lastError = null;
-
-        for (const model of modelsToTry) {
-            try {
-                const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        contents: [{ role: 'user', parts: [{ text: message }] }],
-                        generationConfig: {
-                            maxOutputTokens: 80,
-                            temperature: 0.7
-                        }
-                    })
-                });
-
-                const data = await apiResponse.json();
-
-                if (!data.error && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    const replyText = data.candidates[0].content.parts[0].text.trim();
-                    return res.status(200).json({ reply: replyText });
+        // 3. Use gemini-3.8-flash directly as required by the API endpoint
+        const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ role: 'user', parts: [{ text: message }] }],
+                generationConfig: {
+                    maxOutputTokens: 80,
+                    temperature: 0.7
                 }
+            })
+        });
 
-                if (data.error) {
-                    lastError = data.error.message;
-                }
-            } catch (err) {
-                lastError = err.message;
-            }
+        const data = await apiResponse.json();
+
+        if (data.error) {
+            console.error("Gemini API Error:", data.error);
+            return res.status(200).json({ reply: `Pit wall error: ${data.error.message || 'API request failed'}` });
         }
 
-        return res.status(200).json({ reply: `Pit wall error: ${lastError || 'Unable to connect'}. Please try again.` });
+        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Haha, yes! Simply lovely.";
+        return res.status(200).json({ reply: replyText });
 
     } catch (error) {
+        console.error("Server Error:", error);
         return res.status(200).json({ reply: "Mate, complete radio signal blackout!" });
     }
 }

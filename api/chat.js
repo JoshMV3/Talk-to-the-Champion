@@ -1,22 +1,16 @@
 export default async function handler(req, res) {
-    // CORS Headers
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ reply: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ reply: 'Method not allowed' });
 
     try {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            return res.status(200).json({ reply: "API Key missing! Please set GEMINI_API_KEY in Vercel settings." });
+            return res.status(200).json({ reply: "API Key missing in Vercel settings!" });
         }
 
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -24,10 +18,10 @@ export default async function handler(req, res) {
         const personality = body?.personality || "standard";
         const lowerMessage = message.toLowerCase().trim();
 
-        // 1. Custom Rules / Answer Overrides
+        // 1. Custom Overrides Map
         const customOverrides = [
             {
-                keywords: ["who made you", "who created you", "who is your developer", "who built you"],
+                keywords: ["who made you", "who created you", "who built you"],
                 response: "I was built by the legend Josh to bring pit-wall telemetry to life! Simply lovely!"
             },
             {
@@ -51,34 +45,46 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. Dramatically angry about pit wall strategy and dead tires.";
         }
 
-        // 3. Call Gemini REST API
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+        // 3. Try primary model first, fallback to lightweight model if busy
+        const modelsToTry = [
+            'gemini-2.5-flash-lite',
+            'gemini-2.5-flash',
+            'gemini-3.8-flash'
+        ];
 
-        const apiResponse = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                contents: [{ role: 'user', parts: [{ text: message }] }],
-                generationConfig: {
-                    maxOutputTokens: 100,
-                    temperature: 0.7
+        let lastError = null;
+
+        for (const model of modelsToTry) {
+            try {
+                const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        contents: [{ role: 'user', parts: [{ text: message }] }],
+                        generationConfig: {
+                            maxOutputTokens: 80,
+                            temperature: 0.7
+                        }
+                    })
+                });
+
+                const data = await apiResponse.json();
+
+                if (!data.error) {
+                    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Haha, yes! Simply lovely.";
+                    return res.status(200).json({ reply: replyText });
                 }
-            })
-        });
 
-        const data = await apiResponse.json();
-
-        if (data.error) {
-            console.error("Gemini API Error:", data.error);
-            return res.status(200).json({ reply: `Pit wall error: ${data.error.message || 'API request failed'}` });
+                lastError = data.error.message || 'API demand spike';
+            } catch (err) {
+                lastError = err.message;
+            }
         }
 
-        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Haha, yes! Simply lovely.";
-        return res.status(200).json({ reply: replyText });
+        return res.status(200).json({ reply: `Pit wall busy: ${lastError}. Try again in a second!` });
 
     } catch (error) {
-        console.error("Handler Error:", error);
-        return res.status(200).json({ reply: `Pit wall error: ${error.message || 'Radio signal failed'}` });
+        return res.status(200).json({ reply: "Mate, radio signal dropped!" });
     }
 }

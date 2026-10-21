@@ -339,7 +339,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-title">DIRECT LATENCY</div>
+                <div class="stat-title">PIT WALL PING</div>
                 <div class="stat-value" id="pingVal">--</div>
                 <div class="stat-title" style="margin-top:2px;">STATUS: ONLINE</div>
             </div>
@@ -355,7 +355,7 @@
         <div class="chat-box" id="chatBox">
             <div class="message-row bot-row">
                 <div class="message bot-message">
-                    Haha, yes boys! Simply lovely. Direct pit-wall stream connected. What do you want to talk about?
+                    Haha, yes boys! Simply lovely. Live AI pit-wall connected. What do you want to talk about?
                 </div>
                 <div class="msg-footer">
                     <span class="timestamp" id="initialTime"></span>
@@ -536,48 +536,19 @@
             const startTime = Date.now();
 
             try {
-                // Call serverless endpoint directly
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text, personality: personality })
                 });
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let fullText = '';
-                let firstChunkReceived = false;
+                const data = await response.json();
+                const replyText = data.reply || "Haha, yes! Simply lovely.";
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const json = JSON.parse(line.substring(6));
-                                const textChunk = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                                
-                                if (textChunk) {
-                                    if (!firstChunkReceived) {
-                                        fullText = ''; // Clear placeholder
-                                        firstChunkReceived = true;
-                                        document.getElementById('pingVal').innerText = (Date.now() - startTime) + 'ms';
-                                        playSound('receive');
-                                    }
-                                    fullText += textChunk;
-                                    botMsg.innerText = fullText;
-                                    chatBox.scrollTop = chatBox.scrollHeight;
-                                }
-                            } catch (e) {}
-                        }
-                    }
-                }
-
-                speakText(fullText);
+                document.getElementById('pingVal').innerText = (Date.now() - startTime) + 'ms';
+                playSound('receive');
+                botMsg.innerText = replyText;
+                speakText(replyText);
 
             } catch (err) {
                 botMsg.innerText = "Mate, radio connection lost!";

@@ -18,7 +18,7 @@ export default async function handler(req, res) {
         const personality = body?.personality || "standard";
         const lowerMessage = message.toLowerCase().trim();
 
-        // Custom Overrides (Instant Local Answers for specific queries)
+        // 1. Custom Overrides Map
         const customOverrides = [
             {
                 keywords: ["who made you", "who created you", "who built you"],
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
             }
         }
 
-        // Persona System Prompt
+        // 2. Persona System Prompt
         let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses under 2 short sentences.";
 
         if (personality === 'iracing') {
@@ -45,29 +45,37 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 1. Fetch available models directly from Groq to avoid hardcoded deprecation errors
-        const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
-            headers: { 'Authorization': `Bearer ${apiKey}` }
-        });
-        const modelsData = await modelsRes.json();
-        
-        // Preferred production model priority list
-        const priorityList = [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
-        ];
+        // 3. Fetch active models from Groq and filter OUT guardrails / audio models
+        let selectedModel = "llama-3.3-70b-versatile"; // Primary fallback
 
-        let selectedModel = priorityList[0]; // Default fallback
+        try {
+            const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            const modelsData = await modelsRes.json();
 
-        if (modelsData && Array.isArray(modelsData.data)) {
-            const availableModelIds = modelsData.data.map(m => m.id);
-            const validModel = priorityList.find(m => availableModelIds.includes(m)) || availableModelIds[0];
-            if (validModel) selectedModel = validModel;
+            if (modelsData && Array.isArray(modelsData.data)) {
+                // EXCLUDE whisper, guard, vision, and embed models
+                const validChatModels = modelsData.data
+                    .map(m => m.id)
+                    .filter(id => 
+                        !id.includes("whisper") && 
+                        !id.includes("guard") && 
+                        !id.includes("vision") && 
+                        !id.includes("embed")
+                    );
+
+                if (validChatModels.length > 0) {
+                    // Pick the best available text model (preferring llama or mixtral)
+                    const preferred = validChatModels.find(id => id.includes("llama-3.3") || id.includes("llama-3.1") || id.includes("mixtral"));
+                    selectedModel = preferred || validChatModels[0];
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch model list, falling back to default.");
         }
 
-        // 2. Call Groq Completion API with verified live model
+        // 4. Call Groq Chat API with verified text LLM
         const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: 'POST',
             headers: {
@@ -80,7 +88,7 @@ export default async function handler(req, res) {
                     { role: "system", content: systemPrompt },
                     { role: "user", content: message }
                 ],
-                max_tokens: 100,
+                max_tokens: 80,
                 temperature: 0.7
             })
         });

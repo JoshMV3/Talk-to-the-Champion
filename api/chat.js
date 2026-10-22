@@ -45,33 +45,49 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 3. Call Groq REST API (Using active llama-3.3-70b-versatile model)
-        const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: message }
-                ],
-                max_tokens: 80,
-                temperature: 0.7
-            })
-        });
+        // 3. Fallback list for Groq supported models
+        const modelsToTry = [
+            "llama-3.1-8b-instant",
+            "llama3-8b-8192"
+        ];
 
-        const data = await apiResponse.json();
+        let lastError = null;
 
-        if (data.error) {
-            console.error("Groq API Error:", data.error);
-            return res.status(200).json({ reply: `Pit wall error: ${data.error.message || 'API request failed'}` });
+        for (const modelName of modelsToTry) {
+            try {
+                const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: message }
+                        ],
+                        max_tokens: 80,
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await apiResponse.json();
+
+                if (!data.error && data.choices?.[0]?.message?.content) {
+                    const replyText = data.choices[0].message.content.trim();
+                    return res.status(200).json({ reply: replyText });
+                }
+
+                if (data.error) {
+                    lastError = data.error.message;
+                }
+            } catch (err) {
+                lastError = err.message;
+            }
         }
 
-        const replyText = data.choices?.[0]?.message?.content?.trim() || "Haha, yes! Simply lovely.";
-        return res.status(200).json({ reply: replyText });
+        return res.status(200).json({ reply: `Pit wall error: ${lastError || 'API request failed'}` });
 
     } catch (error) {
         console.error("Server Error:", error);

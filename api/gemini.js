@@ -11,7 +11,24 @@ Rules:
 - Stay in character. Light, harmless humour only. No insults aimed at real people, no hateful or adult content.
 - If asked something serious (help, facts, real-world advice), answer briefly and still in a playful tone.`;
 
-const MODELS = [process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean);
+// Tried in order. "-latest" aliases follow Google's newest model so this keeps working
+// when versions get retired. Set GEMINI_MODEL in Vercel to force a specific model.
+const MODELS = [process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3-flash-preview', 'gemini-flash-lite-latest'].filter(Boolean);
+const BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
+// Last resort: ask Google which Flash models this key can actually use right now.
+async function discoverModels(key, skip) {
+  try {
+    const r = await fetch(`${BASE}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } });
+    const data = await r.json();
+    return (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => String(m.name).replace(/^models\//, ''))
+      .filter(n => /flash/i.test(n) && !/image|tts|audio|live|embed|thinking|robotics|computer/i.test(n) && !skip.includes(n))
+      .sort().reverse()
+      .slice(0, 4);
+  } catch { return []; }
+}
 
 function cors(res) {
   // Allow your GitHub Pages site to call this function too. Tighten to your exact origin if you like.
@@ -41,29 +58,38 @@ module.exports = async (req, res) => {
   contents.push({ role: 'user', parts: [{ text: message }] });
 
   let lastError = 'Unknown error';
-  for (const model of MODELS) {
+
+  async function tryModel(model) {
     try {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents,
-            generationConfig: { temperature: 1, maxOutputTokens: 200 }
-          })
-        }
-      );
+      const r = await fetch(`${BASE}/models/${encodeURIComponent(model)}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents,
+          generationConfig: { temperature: 1, maxOutputTokens: 600 }
+        })
+      });
       const data = await r.json();
-      if (!r.ok) { lastError = (data.error && data.error.message) || `HTTP ${r.status}`; continue; }
-      const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
-        data.candidates[0].content.parts && data.candidates[0].content.parts.map(p => p.text || '').join('').trim();
-      if (text) return res.status(200).json({ reply: text, model });
-      lastError = 'Empty response (possibly blocked by safety filters)';
+      if (!r.ok) { lastError = `[${model}] ` + ((data.error && data.error.message) || `HTTP ${r.status}`); return null; }
+      const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+      const text = parts && parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
+      if (text) return text;
+      lastError = `[${model}] Empty response (possibly blocked by safety filters)`;
+      return null;
     } catch (e) {
-      lastError = e.message;
+      lastError = `[${model}] ` + e.message;
+      return null;
     }
+  }
+
+  for (const model of MODELS) {
+    const text = await tryModel(model);
+    if (text) return res.status(200).json({ reply: text, model });
+  }
+  for (const model of await discoverModels(key, MODELS)) {
+    const text = await tryModel(model);
+    if (text) return res.status(200).json({ reply: text, model });
   }
   return res.status(502).json({ error: lastError });
 };

@@ -82,7 +82,7 @@ function add(who,text){
    - Keeping the site on GitHub Pages?  Set it to your full Vercel URL,
      e.g. 'https://your-project.vercel.app/api/chat'. */
 const API_URL = '/api/chat';
-const history = [];
+const chatHistory = [];
 const statusEl = document.querySelector('.status');
 function setStatus(live){
   statusEl.lastChild.textContent = live ? 'Live AI engines connected' : 'Backup engine (AI offline)';
@@ -94,7 +94,7 @@ async function askAI(text){
   try{
     const r = await fetch(API_URL,{
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message:text, history:history.slice(-8)}),
+      body: JSON.stringify({message:text, history:chatHistory.slice(-8)}),
       signal: ctrl.signal
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
@@ -114,7 +114,7 @@ async function send(text){
   try{ answer = await askAI(text); }
   catch(err){ console.warn('AI unavailable, using backup engine:', err); setStatus(false); answer = reply(text); }
   typing.remove(); add('bot',answer);
-  history.push({role:'user',text}, {role:'bot',text:answer});
+  chatHistory.push({role:'user',text}, {role:'bot',text:answer});
   busy=false;
 }
 f.addEventListener('submit',e=>{e.preventDefault(); send(q.value); q.value='';});

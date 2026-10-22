@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     try {
         const apiKey = process.env.GROQ_API_KEY;
         if (!apiKey) {
-            return res.status(200).json({ reply: "Groq API Key missing in Vercel environment variables!" });
+            return res.status(500).json({ reply: "Groq API Key missing in Vercel environment variables!" });
         }
 
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -68,9 +68,9 @@ export default async function handler(req, res) {
             }
         }
 
-        return res.status(200).json({ reply: `Pit wall error: ${lastError || 'Failed to connect to AI engines'}` });
+        return res.status(500).json({ reply: `Pit wall error: ${lastError || 'Failed to connect to AI engines'}` });
 
     } catch (error) {
-        return res.status(200).json({ reply: `Server Error: ${error.message}` });
+        return res.status(500).json({ reply: `Server Error: ${error.message}` });
     }
 }

@@ -18,7 +18,7 @@ export default async function handler(req, res) {
         const personality = body?.personality || "standard";
         const lowerMessage = message.toLowerCase().trim();
 
-        // 1. Custom Overrides Map (Instant Local Answers)
+        // Custom Overrides Map (Instant Local Answers)
         const customOverrides = [
             {
                 keywords: ["who made you", "who created you", "who built you"],
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
             }
         }
 
-        // 2. Persona System Prompt
+        // Persona System Prompt
         let systemPrompt = "You are Max Botstappen, a humorous F1 and sim-racing parody persona of Max Verstappen. You say 'Haha, yes boys, simply lovely', complain about dead tires, and talk about sim racing. Keep responses under 2 short sentences.";
 
         if (personality === 'iracing') {
@@ -45,50 +45,33 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 3. Active Groq Production Models
-        const modelsToTry = [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768"
-        ];
+        // Call Groq API with their active production model
+        const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: message }
+                ],
+                max_tokens: 80,
+                temperature: 0.7
+            })
+        });
 
-        let lastError = null;
+        const data = await apiResponse.json();
 
-        for (const modelName of modelsToTry) {
-            try {
-                const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: modelName,
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: message }
-                        ],
-                        max_tokens: 80,
-                        temperature: 0.7
-                    })
-                });
-
-                const data = await apiResponse.json();
-
-                if (!data.error && data.choices?.[0]?.message?.content) {
-                    const replyText = data.choices[0].message.content.trim();
-                    return res.status(200).json({ reply: replyText });
-                }
-
-                if (data.error) {
-                    lastError = data.error.message;
-                }
-            } catch (err) {
-                lastError = err.message;
-            }
+        if (data.error) {
+            console.error("Groq API Error:", data.error);
+            return res.status(200).json({ reply: `Pit wall error: ${data.error.message || 'API request failed'}` });
         }
 
-        return res.status(200).json({ reply: `Pit wall error: ${lastError || 'API request failed'}` });
+        const replyText = data.choices?.[0]?.message?.content?.trim() || "Haha, yes! Simply lovely.";
+        return res.status(200).json({ reply: replyText });
 
     } catch (error) {
         console.error("Server Error:", error);

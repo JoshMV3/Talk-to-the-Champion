@@ -45,17 +45,15 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 3. Explicit list of strictly supported Groq LLM chat models
-        const chatModels = [
+        // 3. Verified active production text models on Groq
+        const productionModels = [
             "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
+            "llama-3.1-8b-instant"
         ];
 
         let lastError = null;
 
-        for (const modelName of chatModels) {
+        for (const modelName of productionModels) {
             try {
                 const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: 'POST',

@@ -45,62 +45,51 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 3. Fetch active models from Groq and filter OUT guardrails / audio models
-        let selectedModel = "llama-3.3-70b-versatile"; // Primary fallback
+        // 3. Explicit list of strictly supported Groq LLM chat models
+        const chatModels = [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ];
 
-        try {
-            const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
-                headers: { 'Authorization': `Bearer ${apiKey}` }
-            });
-            const modelsData = await modelsRes.json();
+        let lastError = null;
 
-            if (modelsData && Array.isArray(modelsData.data)) {
-                // EXCLUDE whisper, guard, vision, and embed models
-                const validChatModels = modelsData.data
-                    .map(m => m.id)
-                    .filter(id => 
-                        !id.includes("whisper") && 
-                        !id.includes("guard") && 
-                        !id.includes("vision") && 
-                        !id.includes("embed")
-                    );
+        for (const modelName of chatModels) {
+            try {
+                const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: message }
+                        ],
+                        max_tokens: 80,
+                        temperature: 0.7
+                    })
+                });
 
-                if (validChatModels.length > 0) {
-                    // Pick the best available text model (preferring llama or mixtral)
-                    const preferred = validChatModels.find(id => id.includes("llama-3.3") || id.includes("llama-3.1") || id.includes("mixtral"));
-                    selectedModel = preferred || validChatModels[0];
+                const data = await apiResponse.json();
+
+                if (!data.error && data.choices?.[0]?.message?.content) {
+                    const replyText = data.choices[0].message.content.trim();
+                    return res.status(200).json({ reply: replyText });
                 }
+
+                if (data.error) {
+                    lastError = `${modelName}: ${data.error.message}`;
+                }
+            } catch (err) {
+                lastError = err.message;
             }
-        } catch (e) {
-            console.error("Failed to fetch model list, falling back to default.");
         }
 
-        // 4. Call Groq Chat API with verified text LLM
-        const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: selectedModel,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: message }
-                ],
-                max_tokens: 80,
-                temperature: 0.7
-            })
-        });
-
-        const data = await apiResponse.json();
-
-        if (data.error) {
-            return res.status(200).json({ reply: `Pit wall error (${selectedModel}): ${data.error.message}` });
-        }
-
-        const replyText = data.choices?.[0]?.message?.content?.trim() || "Haha, yes! Simply lovely.";
-        return res.status(200).json({ reply: replyText });
+        return res.status(200).json({ reply: `Pit wall error: ${lastError || 'API request failed'}` });
 
     } catch (error) {
         console.error("Server Error:", error);

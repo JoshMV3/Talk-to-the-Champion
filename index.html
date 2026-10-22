@@ -1,669 +1,114 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talk to the Champion - Max Botstappen AI</title>
-    <style>
-        :root {
-            --bg-dark: #080a0f;
-            --card-bg: rgba(22, 27, 34, 0.85);
-            --border-red: #e10600;
-            --accent-blue: #00d2be;
-            --user-bubble: #1f6feb;
-            --bot-bubble: #21262d;
-            --text-main: #f0f6fc;
-            --text-muted: #8b949e;
-            --border-subtle: #30363d;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(225, 6, 0, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 210, 190, 0.1) 0%, transparent 40%);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 15px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 720px;
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 2px solid var(--border-red);
-            border-radius: 16px;
-            box-shadow: 0 12px 40px rgba(225, 6, 0, 0.25);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            height: 88vh;
-            max-height: 800px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #e10600 0%, #a00400 100%);
-            color: white;
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 900;
-            font-size: 1.2rem;
-            letter-spacing: 1.5px;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .personality-select {
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            outline: none;
-            font-weight: bold;
-        }
-
-        .icon-btn {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            border-radius: 8px;
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .icon-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .dashboard {
-            background: #0d1117;
-            padding: 10px 18px;
-            border-bottom: 1px solid var(--border-subtle);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            font-size: 0.78rem;
-            font-family: monospace;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-subtle);
-            border-radius: 6px;
-            padding: 6px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .stat-title {
-            color: var(--text-muted);
-            font-size: 0.7rem;
-        }
-
-        .stat-value {
-            color: var(--accent-blue);
-            font-weight: bold;
-        }
-
-        .bar-container {
-            width: 100%;
-            height: 6px;
-            background: #21262d;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 2px;
-        }
-
-        .bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent-blue);
-            transition: width 0.4s ease, background-color 0.4s ease;
-        }
-
-        .quick-chips {
-            display: flex;
-            gap: 8px;
-            padding: 10px 18px;
-            background: #12161f;
-            overflow-x: auto;
-            border-bottom: 1px solid var(--border-subtle);
-            scrollbar-width: thin;
-        }
-
-        .chip {
-            background: #21262d;
-            color: var(--text-main);
-            border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .chip:hover {
-            border-color: var(--border-red);
-            background: #2d333b;
-            transform: translateY(-1px);
-        }
-
-        .chat-box {
-            flex: 1;
-            padding: 18px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            scrollbar-width: thin;
-        }
-
-        .message-row {
-            display: flex;
-            flex-direction: column;
-            max-width: 82%;
-        }
-
-        .user-row { align-self: flex-end; }
-        .bot-row { align-self: flex-start; }
-
-        .message {
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            position: relative;
-            word-wrap: break-word;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .user-message {
-            background: var(--user-bubble);
-            color: white;
-            border-bottom-right-radius: 2px;
-        }
-
-        .bot-message {
-            background: var(--bot-bubble);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-main);
-            border-bottom-left-radius: 2px;
-        }
-
-        .msg-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 6px;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            gap: 10px;
-        }
-
-        .copy-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.75rem;
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-
-        .copy-btn:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .input-area {
-            display: flex;
-            padding: 14px 18px;
-            background: #0d1117;
-            border-top: 1px solid var(--border-subtle);
-            gap: 10px;
-        }
-
-        input {
-            flex: 1;
-            padding: 12px 16px;
-            background: #161b22;
-            border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            color: white;
-            outline: none;
-            font-size: 0.95rem;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--border-red);
-        }
-
-        .send-btn {
-            background: var(--border-red);
-            color: white;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .send-btn:hover {
-            background: #b80500;
-            box-shadow: 0 0 12px rgba(225, 6, 0, 0.4);
-        }
-
-        .send-btn:disabled {
-            background: #484f58;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Max Botstappen | Unofficial Parody</title>
+<meta name="description" content="Max Botstappen: a fan-made parody of an unstoppable racing robot. Not affiliated with any driver or team.">
+<style>
+  :root{
+    --bg:#0a1020; --panel:#121a31; --line:#233056; --text:#eef2ff; --muted:#93a0c8;
+    --accent:#ff6a1a; --accent2:#ffd23f; --ok:#34d399;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+  a{color:var(--accent2)}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  nav{position:sticky;top:0;z-index:10;background:rgba(10,16,32,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .logo{font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+  .logo span{color:var(--accent)}
+  nav a{color:var(--muted);text-decoration:none;margin-left:18px;font-size:.9rem}
+  nav a:hover{color:var(--text)}
+  .hero{padding:90px 0 70px;text-align:center;background:
+    repeating-linear-gradient(135deg,transparent 0 28px,rgba(255,255,255,.025) 28px 56px),
+    radial-gradient(ellipse at 50% 0%,rgba(255,106,26,.25),transparent 60%)}
+  .tag{display:inline-block;border:1px solid var(--accent);color:var(--accent);padding:4px 12px;border-radius:99px;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:clamp(2.6rem,9vw,5.6rem);line-height:1;margin:18px 0 12px;font-weight:900;text-transform:uppercase;font-style:italic}
+  h1 em{color:var(--accent);font-style:inherit}
+  .sub{color:var(--muted);max-width:560px;margin:0 auto 28px;font-size:1.1rem}
+  .btn{display:inline-block;background:var(--accent);color:#1a0b00;font-weight:800;border:0;padding:13px 26px;border-radius:8px;text-decoration:none;cursor:pointer;font-size:1rem}
+  .btn:hover{filter:brightness(1.1)}
+  section{padding:60px 0}
+  h2{font-size:1.9rem;margin:0 0 6px;text-transform:uppercase;font-style:italic}
+  .lead{color:var(--muted);margin:0 0 28px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .stat b{display:block;font-size:2.1rem;color:var(--accent2);font-weight:900}
+  .stat span{color:var(--muted);font-size:.9rem}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card h3{margin:0 0 6px;color:var(--accent)}
+  .card p{margin:0;color:var(--muted);font-size:.95rem}
+  /* chat */
+  .radio{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .radio-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font-size:.85rem}
+  .status{display:flex;align-items:center;gap:8px;color:var(--ok)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  #log{height:340px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:.95rem}
+  .msg.you{align-self:flex-end;background:#1d2a52}
+  .msg.bot{align-self:flex-start;background:#2a1a10;border:1px solid #5a2d10}
+  .msg small{display:block;color:var(--accent);font-weight:700;margin-bottom:2px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+  .chip{background:transparent;border:1px solid var(--line);color:var(--muted);padding:6px 12px;border-radius:99px;cursor:pointer;font-size:.8rem}
+  .chip:hover{color:var(--text);border-color:var(--accent)}
+  form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+  input{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:12px;border-radius:8px;font-size:1rem}
+  input:focus{outline:2px solid var(--accent);border-color:transparent}
+  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:.8rem;text-align:center}
+</style>
 </head>
 <body>
+<nav><div class="wrap">
+  <div class="logo">Max <span>Bot</span>stappen</div>
+  <div><a href="#stats">Stats</a><a href="#radio">Pit Wall Radio</a><a href="#about">About</a></div>
+</div></nav>
 
-    <div class="container">
-        <div class="header">
-            <div class="header-title">
-                🏎️ MAX BOTSTAPPEN
-            </div>
-            <div class="controls">
-                <select class="personality-select" id="personalitySelect">
-                    <option value="standard">Standard (Simply Lovely)</option>
-                    <option value="iracing">Sim Racing Gamer</option>
-                    <option value="rant">Radio Rant Mode</option>
-                </select>
-                <button class="icon-btn" id="audioToggle" onclick="toggleAudio()" title="Toggle Audio FX">🔊</button>
-                <button class="icon-btn" id="ttsToggle" onclick="toggleTTS()" title="Toggle Voice (TTS)">🗣️</button>
-                <button class="icon-btn" onclick="clearChat()" title="Reset Radio">🗑️</button>
-            </div>
-        </div>
+<header class="hero"><div class="wrap">
+  <span class="tag">Unofficial parody &middot; Season ∞</span>
+  <h1>Max <em>Bot</em>stappen</h1>
+  <p class="sub">The only racing driver powered by 100% renewable sarcasm. Zero lap-time errors. Several feelings errors.</p>
+  <a class="btn" href="#radio">Open the radio</a>
+</div></header>
 
-        <div class="dashboard">
-            <div class="stat-card">
-                <div class="stat-title">RADIO RANT LEVEL</div>
-                <div class="stat-value" id="frustrationVal">0%</div>
-                <div class="bar-container">
-                    <div class="bar-fill" id="frustrationBar"></div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">SOFT TIRES</div>
-                <div class="stat-value" id="tireVal" style="color: #3fb950;">100%</div>
-                <div class="bar-container">
-                    <div class="bar-fill" id="tireBar" style="width: 100%; background: #3fb950;"></div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">PIT WALL PING</div>
-                <div class="stat-value" id="pingVal">--</div>
-                <div class="stat-title" style="margin-top:2px;">STATUS: ONLINE</div>
-            </div>
-        </div>
+<section id="stats"><div class="wrap">
+  <h2>Telemetry</h2>
+  <p class="lead">Numbers I definitely measured with a very serious instrument.</p>
+  <div class="grid">
+    <div class="stat"><b data-count="101">0</b><span>% commitment to the apex</span></div>
+    <div class="stat"><b data-count="0">0</b><span>known fears (still checking)</span></div>
+    <div class="stat"><b data-count="9000">0</b><span>radio complaints per hour</span></div>
+    <div class="stat"><b data-count="1">0</b><span>tyre compound that is "completely undriveable"</span></div>
+  </div>
+</div></section>
 
-        <div class="quick-chips">
-            <div class="chip" onclick="sendQuickPrompt('How was the race today?')">📻 "How was the race?"</div>
-            <div class="chip" onclick="sendQuickPrompt('Why are you so fast?')">⚡ "Why are you so fast?"</div>
-            <div class="chip" onclick="sendQuickPrompt('Are you sim racing tonight?')">🎮 "Sim racing tonight?"</div>
-            <div class="chip" onclick="sendQuickPrompt('How are the soft tires holding up?')">🛞 "How are the tires?"</div>
-        </div>
+<section id="radio"><div class="wrap">
+  <h2>Pit Wall Radio</h2>
+  <p class="lead">Talk to the bot. The engines are built in, so nothing can fail to connect.</p>
+  <div class="radio">
+    <div class="radio-head"><b>CHANNEL 1 &middot; BOTSTAPPEN</b><div class="status"><span class="dot"></span>AI engines connected</div></div>
+    <div id="log" aria-live="polite"></div>
+    <div class="chips" id="chips"></div>
+    <form id="f"><input id="q" placeholder="Message the driver..." autocomplete="off" aria-label="Message"><button class="btn" type="submit">Send</button></form>
+  </div>
+</div></section>
 
-        <div class="chat-box" id="chatBox">
-            <div class="message-row bot-row">
-                <div class="message bot-message">
-                    Haha, yes boys! Simply lovely. Live AI pit-wall connected. What do you want to talk about?
-                </div>
-                <div class="msg-footer">
-                    <span class="timestamp" id="initialTime"></span>
-                    <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
-                </div>
-            </div>
-        </div>
+<section id="about"><div class="wrap">
+  <h2>About the Bot</h2>
+  <p class="lead">Built entirely from wires, vibes and spite.</p>
+  <div class="grid">
+    <div class="card"><h3>Overtake Module</h3><p>Finds a gap that does not exist, then makes it exist.</p></div>
+    <div class="card"><h3>Radio Filter</h3><p>Converts any problem into "the car is not working" in under 0.2 seconds.</p></div>
+    <div class="card"><h3>Calm Mode</h3><p>Unavailable. Please try again next season.</p></div>
+  </div>
+</div></section>
 
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="Talk to Max or type /help..." onkeypress="handleKeyPress(event)">
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-                <span>Send</span> 🏎️
-            </button>
-        </div>
-    </div>
+<footer><div class="wrap">
+  Max Botstappen is a fictional robot character made for fun. All lines are original jokes written for this parody,
+  not real quotes. Not affiliated with, endorsed by, or connected to any real driver, team or racing series.
+</div></footer>
 
-    <script>
-        document.getElementById('initialTime').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        let audioEnabled = true;
-        let ttsEnabled = false;
-        let frustrationLevel = 0;
-        let tireLevel = 100;
-
-        function playSound(type) {
-            if (!audioEnabled) return;
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
-                if (type === 'send') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(150, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
-                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.15);
-                } else if (type === 'receive') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, ctx.currentTime);
-                    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.2);
-                }
-            } catch (e) {}
-        }
-
-        function speakText(text) {
-            if (!ttsEnabled || !('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.1;
-            utterance.pitch = 0.95;
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function toggleAudio() {
-            audioEnabled = !audioEnabled;
-            document.getElementById('audioToggle').innerText = audioEnabled ? '🔊' : '🔇';
-        }
-
-        function toggleTTS() {
-            ttsEnabled = !ttsEnabled;
-            document.getElementById('ttsToggle').innerText = ttsEnabled ? '🗣️' : '😶';
-        }
-
-        function handleCustomCommand(cmd) {
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const chatBox = document.getElementById('chatBox');
-            const command = cmd.toLowerCase().trim();
-
-            let botReply = "";
-
-            if (command === '/pitstop' || command === '/box') {
-                tireLevel = 100;
-                frustrationLevel = Math.max(0, frustrationLevel - 30);
-                updateTelemetry();
-                document.getElementById('tireVal').innerText = '100%';
-                document.getElementById('tireVal').style.color = '#3fb950';
-                document.getElementById('tireBar').style.width = '100%';
-                document.getElementById('tireBar').style.background = '#3fb950';
-                botReply = "🛞 <strong>BOX BOX BOX!</strong> Fresh set of Softs fitted in 1.9 seconds. Let's push now!";
-            } else if (command === '/weather' || command === '/rain') {
-                botReply = "🌧️ <strong>Pit Wall Telemetry:</strong> Rain expected in 5 minutes! GP is preparing the Intermediate tires.";
-            } else if (command === '/disqualify' || command === '/blackflag') {
-                frustrationLevel = 100;
-                updateTelemetry();
-                botReply = "🚨 <strong>BLACK FLAG!</strong> Disqualified for track limits! Max is storming off to his motorhome!";
-            } else if (command === '/champion') {
-                botReply = "🏆 <strong>MAX BOTSTAPPEN IS WORLD CHAMPION!</strong> Simply lovely! Haha, yes boys!";
-            } else if (command === '/help') {
-                botReply = "📋 <strong>Available Commands:</strong><br>• `/pitstop` or `/box` - Reset tire wear<br>• `/weather` - Check rain report<br>• `/disqualify` - Instant radio rage<br>• `/champion` - Victory celebration<br>• `/clear` - Reset chat log";
-            } else if (command === '/clear') {
-                clearChat();
-                return;
-            } else {
-                botReply = `⚠️ Unknown command \`${cmd}\`. Type \`/help\` to see valid pit wall commands!`;
-            }
-
-            const userRow = document.createElement('div');
-            userRow.className = 'message-row user-row';
-            userRow.innerHTML = `
-                <div class="message user-message">${escapeHtml(cmd)}</div>
-                <div class="msg-footer"><span class="timestamp">${timeStr}</span></div>
-            `;
-            chatBox.appendChild(userRow);
-
-            playSound('receive');
-            const botRow = document.createElement('div');
-            botRow.className = 'message-row bot-row';
-            botRow.innerHTML = `
-                <div class="message bot-message">${botReply}</div>
-                <div class="msg-footer">
-                    <span class="timestamp">${timeStr}</span>
-                    <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
-                </div>
-            `;
-            chatBox.appendChild(botRow);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function sendQuickPrompt(promptText) {
-            const chatBox = document.getElementById('chatBox');
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            playSound('send');
-
-            const userRow = document.createElement('div');
-            userRow.className = 'message-row user-row';
-            userRow.innerHTML = `
-                <div class="message user-message">${escapeHtml(promptText)}</div>
-                <div class="msg-footer"><span class="timestamp">${timeStr}</span></div>
-            `;
-            chatBox.appendChild(userRow);
-
-            const presetAnswers = {
-                'How was the race today?': "Haha, yes boys! Simply lovely. Car was on rails, managed the gap, and had a nice clean stint. Easy win!",
-                'Why are you so fast?': "Because I don't lift! Just hit the apex, clip the kerbs, and push flat out. Simply lovely!",
-                'Are you sim racing tonight?': "100%! Double stint in Redline endurance race on iRacing. No sleep, just full send!",
-                'How are the soft tires holding up?': "Mate, these tires are completely dead! But don't worry, I'm still 2 seconds faster than everyone else!"
-            };
-
-            const replyText = presetAnswers[promptText] || "Haha, yes! Simply lovely. Full send!";
-
-            setTimeout(() => {
-                playSound('receive');
-                document.getElementById('pingVal').innerText = '0ms';
-
-                const botRow = document.createElement('div');
-                botRow.className = 'message-row bot-row';
-                botRow.innerHTML = `
-                    <div class="message bot-message">${replyText}</div>
-                    <div class="msg-footer">
-                        <span class="timestamp">${timeStr}</span>
-                        <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
-                    </div>
-                `;
-                chatBox.appendChild(botRow);
-                chatBox.scrollTop = chatBox.scrollHeight;
-
-                speakText(replyText);
-                updateTelemetry();
-            }, 100);
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chatBox');
-            const sendBtn = document.getElementById('sendBtn');
-            const text = input.value.trim();
-            const personality = document.getElementById('personalitySelect').value;
-
-            if (text === '') return;
-
-            if (text.startsWith('/')) {
-                handleCustomCommand(text);
-                input.value = '';
-                return;
-            }
-
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            playSound('send');
-
-            // Render User Message
-            const userRow = document.createElement('div');
-            userRow.className = 'message-row user-row';
-            userRow.innerHTML = `
-                <div class="message user-message">${escapeHtml(text)}</div>
-                <div class="msg-footer"><span class="timestamp">${timeStr}</span></div>
-            `;
-            chatBox.appendChild(userRow);
-
-            input.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-            sendBtn.disabled = true;
-
-            // Render Bot Message Placeholder
-            const botRow = document.createElement('div');
-            botRow.className = 'message-row bot-row';
-            
-            const botMsg = document.createElement('div');
-            botMsg.className = 'message bot-message';
-            botMsg.innerHTML = `<em>Box box... thinking...</em>`;
-            
-            botRow.appendChild(botMsg);
-            
-            const footer = document.createElement('div');
-            footer.className = 'msg-footer';
-            footer.innerHTML = `<span class="timestamp">${timeStr}</span><button class="copy-btn" onclick="copyText(this)">📋 Copy</button>`;
-            botRow.appendChild(footer);
-
-            chatBox.appendChild(botRow);
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            const startTime = Date.now();
-
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text, personality: personality })
-                });
-
-                const data = await response.json();
-                const replyText = data.reply || "Haha, yes! Simply lovely.";
-
-                document.getElementById('pingVal').innerText = (Date.now() - startTime) + 'ms';
-                playSound('receive');
-                
-                botMsg.innerHTML = escapeHtml(replyText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                speakText(replyText);
-
-            } catch (err) {
-                botMsg.innerText = "Mate, radio connection lost!";
-            }
-
-            sendBtn.disabled = false;
-            chatBox.scrollTop = chatBox.scrollHeight;
-            updateTelemetry();
-        }
-
-        function updateTelemetry() {
-            frustrationLevel = Math.min(100, frustrationLevel + Math.floor(Math.random() * 18 + 7));
-            document.getElementById('frustrationVal').innerText = frustrationLevel + '%';
-            const frustBar = document.getElementById('frustrationBar');
-            frustBar.style.width = frustrationLevel + '%';
-            frustBar.style.background = frustrationLevel > 65 ? '#e10600' : '#00d2be';
-
-            tireLevel = Math.max(8, tireLevel - Math.floor(Math.random() * 8 + 4));
-            const tireVal = document.getElementById('tireVal');
-            const tireBar = document.getElementById('tireBar');
-            tireVal.innerText = tireLevel + '%';
-            tireBar.style.width = tireLevel + '%';
-
-            if (tireLevel < 30) {
-                tireVal.style.color = '#e10600';
-                tireBar.style.background = '#e10600';
-            } else if (tireLevel < 60) {
-                tireVal.style.color = '#d29922';
-                tireBar.style.background = '#d29922';
-            }
-        }
-
-        function clearChat() {
-            document.getElementById('chatBox').innerHTML = `
-                <div class="message-row bot-row">
-                    <div class="message bot-message">
-                        Radio reset. Simply lovely. Let's start again.
-                    </div>
-                    <div class="msg-footer">
-                        <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
-                    </div>
-                </div>
-            `;
-            frustrationLevel = 0;
-            tireLevel = 100;
-            document.getElementById('frustrationVal').innerText = '0%';
-            document.getElementById('frustrationBar').style.width = '0%';
-            document.getElementById('tireVal').innerText = '100%';
-            document.getElementById('tireVal').style.color = '#3fb950';
-            document.getElementById('tireBar').style.width = '100%';
-            document.getElementById('tireBar').style.background = '#3fb950';
-        }
-
-        function copyText(btn) {
-            const msgText = btn.parentElement.parentElement.querySelector('.message').innerText;
-            navigator.clipboard.writeText(msgText);
-            btn.innerText = '✅ Copied';
-            setTimeout(() => { btn.innerText = '📋 Copy'; }, 2000);
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') sendMessage();
-        }
-
-        function escapeHtml(string) {
-            return String(string).replace(/[&<>"']/g, function (s) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s];
-            });
-        }
-    </script>
+<script src="chat.js"></script>
 </body>
 </html>

@@ -45,10 +45,11 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 3. Fallback list for Groq supported models
+        // 3. Active Groq Production Models
         const modelsToTry = [
+            "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
-            "llama3-8b-8192"
+            "mixtral-8x7b-32768"
         ];
 
         let lastError = null;

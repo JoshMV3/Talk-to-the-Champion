@@ -45,7 +45,7 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // 3. Call Groq REST API (Ultra-fast llama-3.1-8b-instant model)
+        // 3. Call Groq REST API (Using active llama-3.3-70b-versatile model)
         const apiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: 'POST',
             headers: {
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
+                model: "llama-3.3-70b-versatile",
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: message }

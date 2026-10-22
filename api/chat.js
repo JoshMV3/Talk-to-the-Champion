@@ -26,9 +26,8 @@ export default async function handler(req, res) {
             systemPrompt = "You are Max Botstappen in full radio rant mode. You are dramatically angry about pit wall strategy and dead tires. Keep responses under 2 short sentences.";
         }
 
-        // Active Groq Production Chat Models (Strictly LLM Text Generation)
+        // Production endpoints on Groq
         const productionModels = [
-            "llama-3.3-70b-versatile",
             "openai/gpt-oss-120b",
             "openai/gpt-oss-20b"
         ];

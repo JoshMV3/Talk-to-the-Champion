@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents,
-          generationConfig: { temperature: 1, maxOutputTokens: 600 }
+          generationConfig: { temperature: 1, maxOutputTokens: 1500 }
         })
       });
       const data = await r.json();
@@ -77,7 +77,9 @@ module.exports = async (req, res) => {
       const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
       const text = parts && parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
       if (text) return text;
-      lastError = `[${model}] Empty response (possibly blocked by safety filters)`;
+      const why = (data.candidates && data.candidates[0] && data.candidates[0].finishReason) ||
+        (data.promptFeedback && data.promptFeedback.blockReason) || 'none given';
+      lastError = `[${model}] Empty response (reason: ${why})`;
       return null;
     } catch (e) {
       lastError = `[${model}] ` + e.message;

@@ -14,7 +14,7 @@ Rules:
 
 // Tried in order. "-latest" aliases follow Google's newest model so this keeps working
 // when versions get retired. Set GEMINI_MODEL in Vercel to force a specific model.
-const MODELS = [process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3-flash-preview', 'gemini-flash-lite-latest'].filter(Boolean);
+const MODELS = [process.env.GEMINI_MODEL, 'gemini-3-flash-preview', 'gemini-flash-latest', 'gemini-flash-lite-latest'].filter(Boolean);
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 // Last resort: ask Google which Flash models this key can actually use right now.

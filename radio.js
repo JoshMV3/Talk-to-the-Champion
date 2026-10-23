@@ -90,7 +90,7 @@ function setStatus(live){
 }
 async function askAI(text){
   const ctrl = new AbortController();
-  const timer = setTimeout(()=>ctrl.abort(), 12000);
+  const timer = setTimeout(()=>ctrl.abort(), 22000);
   try{
     const r = await fetch(API_URL,{
       method:'POST', headers:{'Content-Type':'application/json'},

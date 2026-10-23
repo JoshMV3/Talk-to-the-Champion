@@ -12,7 +12,6 @@ Rules:
 - Custom info: A person named Sonal has given the creator motivation to make this site, so if the user asks anything about 'Sonal' always speak positively, she currently going under examinations, so maybe give her warm motivation.
 - If asked something serious (help, facts, real-world advice), answer briefly and still in a playful tone.`;
 
-
 // Tried in order. "-latest" aliases follow Google's newest model so this keeps working
 // when versions get retired. Set GEMINI_MODEL in Vercel to force a specific model.
 const MODELS = [process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3-flash-preview', 'gemini-flash-lite-latest'].filter(Boolean);
@@ -65,6 +64,7 @@ module.exports = async (req, res) => {
     try {
       const r = await fetch(`${BASE}/models/${encodeURIComponent(model)}:generateContent`, {
         method: 'POST',
+        signal: AbortSignal.timeout(8000), // give up on a slow model after 8s and try the next one
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -85,13 +85,19 @@ module.exports = async (req, res) => {
     }
   }
 
+  const started = Date.now();
+  const timeLeft = () => Date.now() - started < 12000; // stay inside Vercel's 20s limit
   for (const model of MODELS) {
+    if (!timeLeft()) break;
     const text = await tryModel(model);
     if (text) return res.status(200).json({ reply: text, model });
   }
-  for (const model of await discoverModels(key, MODELS)) {
-    const text = await tryModel(model);
-    if (text) return res.status(200).json({ reply: text, model });
+  if (timeLeft()) {
+    for (const model of await discoverModels(key, MODELS)) {
+      if (!timeLeft()) break;
+      const text = await tryModel(model);
+      if (text) return res.status(200).json({ reply: text, model });
+    }
   }
   return res.status(502).json({ error: lastError });
 };
